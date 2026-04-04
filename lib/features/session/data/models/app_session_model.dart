@@ -1,3 +1,4 @@
+import 'package:platform_core_frontend/core/network/response_mapper.dart';
 import 'package:platform_core_frontend/features/auth/data/models/auth_tokens_model.dart';
 import 'package:platform_core_frontend/features/auth/data/models/current_user_model.dart';
 import 'package:platform_core_frontend/features/auth/domain/entities/auth_tokens.dart';
@@ -20,6 +21,11 @@ class AppSessionModel extends AppSession {
           ? AuthTokensModel.fromJson(json['tokens'] as JsonMap).toEntity()
           : null,
     );
+  }
+
+  factory AppSessionModel.fromResponse(dynamic raw) {
+    final json = ResponseMapper.unwrapDataMap(raw);
+    return AppSessionModel.fromJson(json);
   }
 
   JsonMap toJson() {

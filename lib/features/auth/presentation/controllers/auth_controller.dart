@@ -7,6 +7,7 @@ import 'package:platform_core_frontend/features/auth/domain/entities/auth_tokens
 import 'package:platform_core_frontend/features/auth/domain/entities/current_user.dart';
 import 'package:platform_core_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:platform_core_frontend/features/auth/presentation/state/auth_state.dart';
+import 'package:platform_core_frontend/features/session/domain/entities/app_session.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({
@@ -136,7 +137,7 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<bool> _submitAuth({
-    required Future<ApiResult<AuthTokens>> Function() action,
+    required Future<ApiResult<AppSession>> Function() action,
   }) async {
     _setState(
       _state.copyWith(
@@ -147,14 +148,26 @@ class AuthController extends ChangeNotifier {
 
     final authResult = await action();
     switch (authResult) {
-      case ApiSuccess<AuthTokens>():
-        final userResult = await _authRepository.getCurrentUser();
-        final success = await _applyCurrentUserResult(userResult);
-        if (!success) {
-          _setState(_state.copyWith(isSubmitting: false));
+      case ApiSuccess<AppSession>(:final data):
+        final user = data.user;
+        if (user == null) {
+          _markUnauthenticated(
+            message: 'Unable to load your account profile. Please try again.',
+          );
+          return false;
         }
-        return success;
-      case ApiFailure<AuthTokens>(:final exception):
+
+        _setState(
+          _state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+            clearError: true,
+            isSubmitting: false,
+            isLoggingOut: false,
+          ),
+        );
+        return true;
+      case ApiFailure<AppSession>(:final exception):
         _markUnauthenticated(message: _toUserMessage(exception));
         return false;
     }

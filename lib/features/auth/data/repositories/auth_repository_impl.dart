@@ -6,6 +6,8 @@ import 'package:platform_core_frontend/features/auth/data/models/auth_tokens_mod
 import 'package:platform_core_frontend/features/auth/domain/entities/auth_tokens.dart';
 import 'package:platform_core_frontend/features/auth/domain/entities/current_user.dart';
 import 'package:platform_core_frontend/features/auth/domain/repositories/auth_repository.dart';
+import 'package:platform_core_frontend/features/session/data/models/app_session_model.dart';
+import 'package:platform_core_frontend/features/session/domain/entities/app_session.dart';
 import 'package:platform_core_frontend/shared/types/json_types.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -19,15 +21,15 @@ class AuthRepositoryImpl implements AuthRepository {
   final TokenStorage _tokenStorage;
 
   @override
-  Future<ApiResult<AuthTokens>> register({required JsonMap payload}) async {
+  Future<ApiResult<AppSession>> register({required JsonMap payload}) async {
     final result = await _remoteDataSource.register(payload: payload);
-    return _persistTokens(result);
+    return _persistSession(result);
   }
 
   @override
-  Future<ApiResult<AuthTokens>> login({required JsonMap payload}) async {
+  Future<ApiResult<AppSession>> login({required JsonMap payload}) async {
     final result = await _remoteDataSource.login(payload: payload);
-    return _persistTokens(result);
+    return _persistSession(result);
   }
 
   @override
@@ -68,6 +70,27 @@ class AuthRepositoryImpl implements AuthRepository {
         return ApiSuccess<AuthTokens>(data);
       case ApiFailure<AuthTokens>(:final exception):
         return ApiFailure<AuthTokens>(exception);
+    }
+  }
+
+  Future<ApiResult<AppSession>> _persistSession(
+    ApiResult<AppSessionModel> result,
+  ) async {
+    final entityResult = result.mapData((model) => model);
+
+    switch (entityResult) {
+      case ApiSuccess<AppSession>(:final data):
+        final tokens = data.tokens;
+        if (tokens == null) {
+          return const ApiFailure<AppSession>(
+            UnknownException('Authentication tokens missing from response'),
+          );
+        }
+        await _tokenStorage.saveAccessToken(tokens.accessToken);
+        await _tokenStorage.saveRefreshToken(tokens.refreshToken);
+        return ApiSuccess<AppSession>(data);
+      case ApiFailure<AppSession>(:final exception):
+        return ApiFailure<AppSession>(exception);
     }
   }
 }

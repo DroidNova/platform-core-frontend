@@ -3,6 +3,7 @@ import 'package:platform_core_frontend/core/network/api_result.dart';
 import 'package:platform_core_frontend/core/network/dio_client.dart';
 import 'package:platform_core_frontend/features/auth/data/models/auth_tokens_model.dart';
 import 'package:platform_core_frontend/features/auth/data/models/current_user_model.dart';
+import 'package:platform_core_frontend/features/session/data/models/app_session_model.dart';
 import 'package:platform_core_frontend/shared/types/json_types.dart';
 
 class AuthRemoteDataSource {
@@ -10,20 +11,20 @@ class AuthRemoteDataSource {
 
   final DioClient _dioClient;
 
-  Future<ApiResult<AuthTokensModel>> register({required JsonMap payload}) {
-    return _dioClient.post<AuthTokensModel>(
+  Future<ApiResult<AppSessionModel>> register({required JsonMap payload}) {
+    return _dioClient.post<AppSessionModel>(
       ApiEndpoints.authRegister,
       data: payload,
-      parser: AuthTokensModel.fromResponse,
+      parser: AppSessionModel.fromResponse,
       requiresAuth: false,
     );
   }
 
-  Future<ApiResult<AuthTokensModel>> login({required JsonMap payload}) {
-    return _dioClient.post<AuthTokensModel>(
+  Future<ApiResult<AppSessionModel>> login({required JsonMap payload}) {
+    return _dioClient.post<AppSessionModel>(
       ApiEndpoints.authLogin,
       data: payload,
-      parser: AuthTokensModel.fromResponse,
+      parser: AppSessionModel.fromResponse,
       requiresAuth: false,
     );
   }
